@@ -170,7 +170,7 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
       width: number,
       height: number,
       backgroundColor: number,
-      textColor: string = "#ffffff"
+      textColor: string = "#e5e7eb"
     ) => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -181,16 +181,23 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
       canvas.width = width * scale;
       canvas.height = height * scale;
 
-      // Fill background
-      ctx.fillStyle = new THREE.Color(backgroundColor).getStyle();
+      // Fill background with a semi-transparent dark color
+      const bgColor = new THREE.Color(backgroundColor).multiplyScalar(0.7);
+      ctx.fillStyle = bgColor.getStyle();
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Set text properties
+      // Set text properties with adjusted font for better readability
       const fontSize = Math.min(canvas.height / 2, 32 * scale);
-      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillStyle = textColor;
+
+      // Add slight text shadow for better contrast
+      ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 1;
 
       // Handle text wrapping for longer text
       const words = text.split(" ");
@@ -305,9 +312,9 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
 
         const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
         const lineMaterial = new THREE.LineBasicMaterial({
-          color: 0x666666,
+          color: 0x4a5568,
           transparent: true,
-          opacity: 0.7,
+          opacity: 0.5,
           ...(connection.type === "dashed"
             ? {dashSize: 0.2, gapSize: 0.1}
             : {}),
@@ -347,12 +354,16 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
           Object.values(nodeMeshes).forEach((mesh) => {
             if (mesh.userData.id === nodeId) {
               (mesh.material as THREE.MeshStandardMaterial).emissive.set(
-                0x333333
+                0x666666
               );
+              (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
+                0.5;
             } else {
               (mesh.material as THREE.MeshStandardMaterial).emissive.set(
                 0x000000
               );
+              (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
+                0;
             }
           });
         } else {
@@ -361,12 +372,14 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
             (mesh.material as THREE.MeshStandardMaterial).emissive.set(
               0x000000
             );
+            (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
           });
         }
       } else {
         document.body.style.cursor = "auto";
         Object.values(nodeMeshes).forEach((mesh) => {
           (mesh.material as THREE.MeshStandardMaterial).emissive.set(0x000000);
+          (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
         });
       }
     };
@@ -470,19 +483,25 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
   return (
     <div className='relative w-full' style={{height}}>
       {isLoading && (
-        <div className='absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 z-10'>
-          <div className='text-lg font-medium'>Loading 3D diagram...</div>
+        <div className='absolute inset-0 flex items-center justify-center bg-[#1a1a1a] bg-opacity-90 z-10'>
+          <div className='text-lg font-medium text-gray-200'>
+            Loading 3D diagram...
+          </div>
         </div>
       )}
 
       <div ref={mountRef} className='w-full h-full' />
 
       {activeNode && (
-        <div className='absolute bottom-4 left-4 right-4 bg-white p-4 rounded-lg shadow-lg max-w-md'>
-          <h3 className='text-lg font-bold'>{getNodeInfo(activeNode).title}</h3>
-          <p className='mt-2'>{getNodeInfo(activeNode).description}</p>
+        <div className='absolute bottom-4 left-4 right-4 bg-[#242424] p-4 rounded-lg shadow-lg max-w-md border border-gray-700'>
+          <h3 className='text-lg font-bold text-gray-100'>
+            {getNodeInfo(activeNode).title}
+          </h3>
+          <p className='mt-2 text-gray-300'>
+            {getNodeInfo(activeNode).description}
+          </p>
           <button
-            className='mt-2 text-sm text-blue-600 hover:text-blue-800'
+            className='mt-2 text-sm text-blue-400 hover:text-blue-300 transition-colors'
             onClick={() => setActiveNode(null)}
           >
             Close
@@ -490,9 +509,9 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
         </div>
       )}
 
-      <div className='absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg'>
-        <h4 className='font-medium text-sm mb-2'>Instructions</h4>
-        <ul className='text-xs space-y-1'>
+      <div className='absolute top-4 right-4 bg-[#242424] p-3 rounded-lg shadow-lg border border-gray-700'>
+        <h4 className='font-medium text-sm mb-2 text-gray-200'>Instructions</h4>
+        <ul className='text-xs space-y-1 text-gray-300'>
           <li>• Click on any node for details</li>
           <li>• Drag to rotate the view</li>
           <li>• Scroll to zoom in/out</li>

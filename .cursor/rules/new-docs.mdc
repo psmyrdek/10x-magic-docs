@@ -13,21 +13,33 @@ Execute the following:
 
 1) Make sure that subdirectory `src/catalog` exists
 2) Create subdirectory `src/catalog/<TECHNOLOGY>` (kebab-case)
-3) In `src/catalog/<TECHNOLOGY>/knowledge.md` create comprehensive yet approachable documentation explaining key aspects of <TECHNOLOGY>
-3.1) Focus on three sub-chapters - Why, What, How
-4) In `src/catalog/<TECHNOLOGY>/chart-1.md` create mermaid flowchart diagram illustrating key blocks and modules of issues that TECHNOLOGY wants to solve (Why).
-5) In `src/catalog/<TECHNOLOGY>/chart-2.md` create mermaid flowchart diagram illustrating key blocks and modules of technology from user perspective (What).
-6) In `src/catalog/<TECHNOLOGY>/chart-3.md` create mermaid state diagram illustrating key actions and steps to take to achieve first success with this technology (How).
+3) Create new file `src/catalog/<TECHNOLOGY>/knowledge.md` where you will put comprehensive yet approachable documentation explaining key aspects of <TECHNOLOGY>
+3.1) Focus on three key chapters - Why we need it, What it is, How to use it - with technical examples and code snippets
 
-7) In `src/catalog/<TECHNOLOGY>/{Technology}Diagram{Why|How|What}.tsx` create Three.js interactive 3d diagrams matching exactly what you've build in given chart 1-3, but this time in Three.js and React.
+## Visualizing Technical Knowledge
 
-Always use [GithubActionsDiagram.tsx](mdc:src/catalog/github-actions/GithubActionsDiagram.tsx) as a reference (including base diagram [BaseThreeJSDiagram.tsx](mdc:src/shared/components/BaseThreeJSDiagram.tsx))
+4) After creating `knowledge.md`, generate 3 complementary diagrams that illuminate different aspects of the technology based on its core characteristics:
 
-8) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How. Use `knowledge.md` to create interactive Wikipedia-like page incorporating Diagrams and descriptions of each section, with examples in code snippets.
+- First diagram: Highlight the **problem space** the technology addresses
+- Second diagram: Illustrate the **conceptual architecture** of the technology
+- Third diagram: Demonstrate a **practical implementation path**
 
+4.1) In `src/catalog/<TECHNOLOGY>/chart-context.md` create a Mermaid diagram showing the ecosystem and problem context where the technology operates. Focus on pain points it resolves and where it fits in the development landscape.
 
-When developing code, always follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)
+4.2) In `src/catalog/<TECHNOLOGY>/chart-structure.md` create a Mermaid diagram mapping the internal structure, components, and relationships within the technology. Emphasize how these parts work together.
 
-Integrate new page with [App.tsx](mdc:src/App.tsx) and embed it as new route.
+4.3) In `src/catalog/<TECHNOLOGY>/chart-workflow.md` create a Mermaid diagram outlining a practical workflow with at least 5 concrete steps showcasing a typical implementation scenario.
 
-Make sure there's a new tile added on [HomePage.tsx](mdc:src/pages/HomePage.tsx)
+5) Create matching 3D interactive visualizations:
+
+In `src/catalog/<TECHNOLOGY>/{Technology}DiagramContext.tsx`, `{Technology}DiagramStructure.tsx`, and `{Technology}DiagramWorkflow.tsx` create Three.js interactive 3D diagrams that correspond to the Mermaid diagrams but leverage spatial representation to enhance understanding.
+
+Reuse common elements from [BaseThreeJSDiagram.tsx](mdc:src/shared/components/BaseThreeJSDiagram.tsx)
+
+6) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How. Use gathered knowledge to create interactive Wikipedia-like page in Dark Mode, inspired by Fluent 2.0, incorporating Diagrams and descriptions of each section, with examples in code snippets.
+
+General recommendations:
+- When developing code, always follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)
+- Integrate new page with [App.tsx](mdc:src/App.tsx) and embed it as new route.
+- Make sure there's a new tile added on [HomePage.tsx](mdc:src/pages/HomePage.tsx)
+- When building pages and instructions, be specific - as an example, instead of "Read the docs" use suggestions such as "Get familiar with the docs at angular.dev"
