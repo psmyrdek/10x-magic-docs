@@ -1,6 +1,7 @@
 import {RouterProvider, createBrowserRouter} from "react-router-dom";
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
+import GithubActionsPage from "./catalog/github-actions/GithubActionsPage";
 
 const router = createBrowserRouter([
   {
@@ -8,6 +9,14 @@ const router = createBrowserRouter([
     element: (
       <Layout>
         <HomePage />
+      </Layout>
+    ),
+  },
+  {
+    path: "/github-actions",
+    element: (
+      <Layout>
+        <GithubActionsPage />
       </Layout>
     ),
   },

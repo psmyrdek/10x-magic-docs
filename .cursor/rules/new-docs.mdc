@@ -14,14 +14,20 @@ Execute the following:
 1) Make sure that subdirectory `src/catalog` exists
 2) Create subdirectory `src/catalog/<TECHNOLOGY>` (kebab-case)
 3) In `src/catalog/<TECHNOLOGY>/knowledge.md` create comprehensive yet approachable documentation explaining key aspects of <TECHNOLOGY>
-4) In `src/catalog/<TECHNOLOGY>/flowchart.md` create mermaid flowchart diagram illustrating key blocks and modules of technology from user perspective.
+3.1) Focus on three sub-chapters - Why, What, How
+4) In `src/catalog/<TECHNOLOGY>/chart-1.md` create mermaid flowchart diagram illustrating key blocks and modules of issues that TECHNOLOGY wants to solve (Why).
+5) In `src/catalog/<TECHNOLOGY>/chart-2.md` create mermaid flowchart diagram illustrating key blocks and modules of technology from user perspective (What).
+6) In `src/catalog/<TECHNOLOGY>/chart-3.md` create mermaid state diagram illustrating key actions and steps to take to achieve first success with this technology (How).
 
-For example:
+7) In `src/catalog/<TECHNOLOGY>/{Technology}Diagram{Why|How|What}.tsx` create Three.js interactive 3d diagrams matching exactly what you've build in given chart 1-3, but this time in Three.js and React.
 
-Github Actions - Triggers, Workflow, Jobs, Steps, Composite Actions
+Always use [GithubActionsDiagram.tsx](mdc:src/catalog/github-actions/GithubActionsDiagram.tsx) as a reference (including base diagram [BaseThreeJSDiagram.tsx](mdc:src/shared/components/BaseThreeJSDiagram.tsx))
 
-4) In `src/catalog/<TECHNOLOGY>/{Technology}Diagram.tsx` create Three.js interactive 3d diagram mathing exactly what you've build in flowchart, but this time in Three.js and React. Follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)
+8) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How.
 
-5) Integrate diagram component with [App.tsx](mdc:src/App.tsx) - introduce new page and embed it there.
 
-6) Make sure there's a new tile added on [HomePage.tsx](mdc:src/pages/HomePage.tsx)
+When developing code, always follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)
+
+Integrate new page with [App.tsx](mdc:src/App.tsx) and embed it as new route.
+
+Make sure there's a new tile added on [HomePage.tsx](mdc:src/pages/HomePage.tsx)

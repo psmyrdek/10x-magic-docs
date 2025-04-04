@@ -5,9 +5,9 @@ alwaysApply: true
 ---
 ## Tech Stack
 
-- Vite
-- TailwindCSS
 - React
-- React Router v7
-- TypeScript
 - Three.js
+- Tailwind
+- Vite
+
+Always use libraries and frameworks available in [package.json](mdc:package.json)
