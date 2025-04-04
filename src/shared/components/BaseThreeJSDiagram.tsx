@@ -1,6 +1,23 @@
-import React, {useRef, useState, useEffect} from "react";
+import React, {useState, useRef, useEffect, useMemo} from "react";
+import {Canvas, useFrame, useThree} from "@react-three/fiber";
+import {
+  OrbitControls,
+  Text,
+  Environment,
+  PerspectiveCamera,
+  useCursor,
+  MeshTransmissionMaterial,
+  MeshDistortMaterial,
+  MeshWobbleMaterial,
+  Float,
+  RoundedBox,
+  Torus,
+  Sphere,
+  Cylinder,
+  Effects,
+} from "@react-three/drei";
 import * as THREE from "three";
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+import {EffectComposer, Bloom, Vignette} from "@react-three/postprocessing";
 
 export type Node3D = {
   id: string;
@@ -30,92 +47,352 @@ type BaseThreeJSDiagramProps = {
   backgroundColor?: number;
 };
 
-export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
+// Node component with modernized materials and effects
+const Node = ({
+  node,
+  position,
+  onNodeClick,
+  isHovered,
+  setHovered,
+}: {
+  node: Node3D;
+  position: THREE.Vector3;
+  onNodeClick: (nodeId: string) => void;
+  isHovered: boolean;
+  setHovered: (nodeId: string | null) => void;
+}) => {
+  const [hovered, hover] = useState(false);
+  useCursor(hovered || isHovered);
+
+  // Scale up slightly when hovered
+  const scale = hovered || isHovered ? 1.15 : 1;
+
+  // Create appropriate geometry based on node type
+  switch (node.type) {
+    case "trigger":
+      return (
+        <group position={position} scale={scale}>
+          <Float
+            speed={2}
+            rotationIntensity={0.2}
+            floatIntensity={0.3}
+            floatingRange={[-0.05, 0.05]}
+          >
+            <Sphere
+              args={[0.8, 32, 32]}
+              onPointerOver={() => {
+                hover(true);
+                setHovered(node.id);
+              }}
+              onPointerOut={() => {
+                hover(false);
+                setHovered(null);
+              }}
+              onClick={() => onNodeClick(node.id)}
+            >
+              <MeshWobbleMaterial
+                color={node.color}
+                factor={0.2}
+                speed={0.5}
+                roughness={0.4}
+                metalness={0.6}
+                emissive={
+                  hovered || isHovered
+                    ? new THREE.Color(node.color).multiplyScalar(0.3)
+                    : new THREE.Color(0x000000)
+                }
+              />
+            </Sphere>
+            <NodeLabel name={node.name} />
+          </Float>
+        </group>
+      );
+    case "definition":
+      return (
+        <group position={position} scale={scale}>
+          <Float
+            speed={1.5}
+            rotationIntensity={0.1}
+            floatIntensity={0.3}
+            floatingRange={[-0.05, 0.05]}
+          >
+            <RoundedBox
+              args={[1.5, 0.8, 0.8]}
+              radius={0.15}
+              smoothness={4}
+              onPointerOver={() => {
+                hover(true);
+                setHovered(node.id);
+              }}
+              onPointerOut={() => {
+                hover(false);
+                setHovered(null);
+              }}
+              onClick={() => onNodeClick(node.id)}
+            >
+              <MeshTransmissionMaterial
+                color={node.color}
+                distortionScale={0.5}
+                temporalDistortion={0.1}
+                roughness={0.2}
+                thickness={0.8}
+                transmission={0.6}
+                chromaticAberration={0.1}
+                anisotropicBlur={0.1}
+                envMapIntensity={0.4}
+                distortion={0.3}
+                ior={1.5}
+                emissive={
+                  hovered || isHovered
+                    ? new THREE.Color(node.color).multiplyScalar(0.5)
+                    : new THREE.Color(0x000000)
+                }
+              />
+            </RoundedBox>
+            <NodeLabel name={node.name} />
+          </Float>
+        </group>
+      );
+    case "execution":
+      return (
+        <group position={position} scale={scale}>
+          <Float
+            speed={1.8}
+            rotationIntensity={0.1}
+            floatIntensity={0.2}
+            floatingRange={[-0.05, 0.05]}
+          >
+            <Cylinder
+              args={[0.6, 0.6, 0.8, 32]}
+              onPointerOver={() => {
+                hover(true);
+                setHovered(node.id);
+              }}
+              onPointerOut={() => {
+                hover(false);
+                setHovered(null);
+              }}
+              onClick={() => onNodeClick(node.id)}
+            >
+              <MeshDistortMaterial
+                color={node.color}
+                distort={0.2}
+                speed={0.8}
+                roughness={0.5}
+                metalness={0.2}
+                emissive={
+                  hovered || isHovered
+                    ? new THREE.Color(node.color).multiplyScalar(0.3)
+                    : new THREE.Color(0x000000)
+                }
+              />
+            </Cylinder>
+            <NodeLabel name={node.name} />
+          </Float>
+        </group>
+      );
+    case "resource":
+      return (
+        <group position={position} scale={scale}>
+          <Float
+            speed={1.5}
+            rotationIntensity={0.15}
+            floatIntensity={0.25}
+            floatingRange={[-0.05, 0.05]}
+          >
+            <Torus
+              args={[0.6, 0.2, 16, 32]}
+              onPointerOver={() => {
+                hover(true);
+                setHovered(node.id);
+              }}
+              onPointerOut={() => {
+                hover(false);
+                setHovered(null);
+              }}
+              onClick={() => onNodeClick(node.id)}
+            >
+              <meshPhysicalMaterial
+                color={node.color}
+                roughness={0.2}
+                metalness={0.8}
+                clearcoat={0.8}
+                clearcoatRoughness={0.2}
+                emissive={
+                  hovered || isHovered
+                    ? new THREE.Color(node.color).multiplyScalar(0.3)
+                    : new THREE.Color(0x000000)
+                }
+              />
+            </Torus>
+            <NodeLabel name={node.name} />
+          </Float>
+        </group>
+      );
+    default:
+      return (
+        <group position={position} scale={scale}>
+          <Float
+            speed={2}
+            rotationIntensity={0.1}
+            floatIntensity={0.2}
+            floatingRange={[-0.05, 0.05]}
+          >
+            <Sphere
+              args={[0.8, 32, 32]}
+              onPointerOver={() => {
+                hover(true);
+                setHovered(node.id);
+              }}
+              onPointerOut={() => {
+                hover(false);
+                setHovered(null);
+              }}
+              onClick={() => onNodeClick(node.id)}
+            >
+              <meshPhysicalMaterial
+                color={node.color}
+                roughness={0.2}
+                metalness={0.5}
+                emissive={
+                  hovered || isHovered
+                    ? new THREE.Color(node.color).multiplyScalar(0.3)
+                    : new THREE.Color(0x000000)
+                }
+              />
+            </Sphere>
+            <NodeLabel name={node.name} />
+          </Float>
+        </group>
+      );
+  }
+};
+
+// Modern connection line with smooth curves
+const Connection = ({
+  startPosition,
+  endPosition,
+  type,
+}: {
+  startPosition: THREE.Vector3;
+  endPosition: THREE.Vector3;
+  type: string;
+}) => {
+  const points = useMemo(() => {
+    // Create a curve between the two points with a nice arc
+    const curve = new THREE.QuadraticBezierCurve3(
+      startPosition,
+      new THREE.Vector3(
+        (startPosition.x + endPosition.x) / 2,
+        (startPosition.y + endPosition.y) / 2 + 0.5,
+        (startPosition.z + endPosition.z) / 2
+      ),
+      endPosition
+    );
+
+    return curve.getPoints(20);
+  }, [startPosition, endPosition]);
+
+  const color = useMemo(() => {
+    if (type === "challenge") return new THREE.Color(0xff7777);
+    if (type === "solution") return new THREE.Color(0x55ccff);
+    return new THREE.Color(0xaabbcc);
+  }, [type]);
+
+  const lineGeometry = useMemo(() => {
+    return new THREE.BufferGeometry().setFromPoints(points);
+  }, [points]);
+
+  // Much thicker lines, and removing the dashed option
+  const lineWidth = 8;
+
+  return (
+    <>
+      <mesh>
+        <primitive object={lineGeometry} attach='geometry' />
+        <lineBasicMaterial
+          color={color}
+          opacity={0.8}
+          transparent={true}
+          linewidth={lineWidth}
+        />
+      </mesh>
+
+      {/* Enhanced glow effect */}
+      <mesh>
+        <primitive object={lineGeometry} attach='geometry' />
+        <lineBasicMaterial
+          color={color}
+          opacity={0.4}
+          transparent={true}
+          linewidth={lineWidth + 2}
+        />
+      </mesh>
+    </>
+  );
+};
+
+// Node label with modern appearance
+const NodeLabel = ({name}: {name: string}) => {
+  return (
+    <Text
+      position={[0, 1.2, 0]}
+      fontSize={0.25}
+      color='#ffffff'
+      anchorX='center'
+      anchorY='middle'
+      outlineWidth={0.005}
+      outlineColor='#000000'
+      maxWidth={2}
+      renderOrder={1}
+      textAlign='center'
+      depthOffset={1}
+    >
+      {name}
+    </Text>
+  );
+};
+
+// Scene component containing all 3D elements
+const Scene = ({
   nodes,
   connections,
-  getNodeInfo,
-  createNodeGeometry,
-  height = "600px",
-  backgroundColor = 0xf0f0f0,
+  onNodeClick,
+  hoveredNode,
+  setHoveredNode,
+}: {
+  nodes: Node3D[];
+  connections: Connection3D[];
+  onNodeClick: (nodeId: string) => void;
+  hoveredNode: string | null;
+  setHoveredNode: (nodeId: string | null) => void;
 }) => {
-  const mountRef = useRef<HTMLDivElement>(null);
-  const [activeNode, setActiveNode] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Store node positions after force-directed layout
+  const nodePositions = useRef<{[key: string]: THREE.Vector3}>({});
 
-  useEffect(() => {
-    if (!mountRef.current) return;
-
-    // Initialize scene
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(backgroundColor);
-
-    // Add ambient light and directional light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7);
-    scene.add(directionalLight);
-
-    // Create camera
-    const camera = new THREE.PerspectiveCamera(
-      60,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(0, 0, 20);
-
-    // Create renderer
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true,
+  // Apply force-directed layout algorithm
+  const applyForceDirectedLayout = () => {
+    // Initialize positions from nodes
+    nodes.forEach((node) => {
+      nodePositions.current[node.id] = new THREE.Vector3(...node.position);
     });
-
-    const pixelRatio = Math.min(window.devicePixelRatio, 2);
-    renderer.setPixelRatio(pixelRatio);
-    renderer.setSize(
-      mountRef.current.clientWidth,
-      mountRef.current.clientHeight
-    );
-
-    if (mountRef.current.firstChild) {
-      mountRef.current.removeChild(mountRef.current.firstChild);
-    }
-    mountRef.current.appendChild(renderer.domElement);
-
-    // Add OrbitControls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-
-    // Node meshes map
-    const nodeMeshes: {[key: string]: THREE.Mesh} = {};
-    const nodePositions: {[key: string]: THREE.Vector3} = {};
-    const nodeGroups: {[key: string]: THREE.Group} = {};
 
     // Force-directed layout parameters
-    const repulsionForce = 2; // Strength of repulsion between nodes
-    const minDistance = 2.5; // Minimum distance between nodes
-    const damping = 0.8; // Damping factor for node movement
-    const iterations = 50; // Number of iterations for force-directed layout
+    const repulsionForce = 2;
+    const minDistance = 2.5;
+    const damping = 0.8;
+    const iterations = 50;
 
-    // Initialize node positions
-    nodes.forEach((node) => {
-      nodePositions[node.id] = new THREE.Vector3(...node.position);
-    });
-
-    // Apply force-directed layout
+    // Run iterations of force-directed layout
     for (let i = 0; i < iterations; i++) {
       // Calculate repulsion forces
       nodes.forEach((node1) => {
-        const pos1 = nodePositions[node1.id];
+        const pos1 = nodePositions.current[node1.id];
         const forces = new THREE.Vector3(0, 0, 0);
 
         nodes.forEach((node2) => {
           if (node1.id !== node2.id) {
-            const pos2 = nodePositions[node2.id];
+            const pos2 = nodePositions.current[node2.id];
             const direction = new THREE.Vector3().subVectors(pos1, pos2);
             const distance = direction.length();
 
@@ -138,362 +415,150 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
           newPos.x - pos1.x,
           newPos.z - pos1.z
         );
+
         if (horizontalDiff.length() > maxHorizontalMove) {
           horizontalDiff.normalize().multiplyScalar(maxHorizontalMove);
           newPos.x = pos1.x + horizontalDiff.x;
           newPos.z = pos1.z + horizontalDiff.y;
         }
 
-        nodePositions[node1.id] = newPos;
+        nodePositions.current[node1.id] = newPos;
       });
     }
+  };
 
-    // Default node geometry creator
-    const defaultCreateNodeGeometry = (type: string): THREE.BufferGeometry => {
-      switch (type) {
-        case "trigger":
-          return new THREE.SphereGeometry(0.8, 32, 32);
-        case "definition":
-          return new THREE.BoxGeometry(1.5, 0.8, 0.8);
-        case "execution":
-          return new THREE.CylinderGeometry(0.6, 0.6, 0.8, 32);
-        case "resource":
-          return new THREE.TorusGeometry(0.6, 0.2, 16, 32);
-        default:
-          return new THREE.SphereGeometry(0.8, 32, 32);
-      }
-    };
+  // Apply layout on component mount
+  useEffect(() => {
+    applyForceDirectedLayout();
+  }, [nodes]);
 
-    // Create canvas texture for text rendering
-    const createTextTexture = (
-      text: string,
-      width: number,
-      height: number,
-      backgroundColor: number,
-      textColor: string = "#e5e7eb"
-    ) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
+  return (
+    <>
+      {/* Environment and lighting */}
+      <Environment preset='city' />
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[5, 10, 7]} intensity={0.8} castShadow />
+      <hemisphereLight args={[0x606060, 0x404040]} intensity={0.4} />
 
-      // Set canvas size (higher resolution for better text quality)
-      const scale = 2;
-      canvas.width = width * scale;
-      canvas.height = height * scale;
+      {/* Add subtle camera movement */}
+      <CameraRig />
 
-      // Fill background with a semi-transparent dark color
-      const bgColor = new THREE.Color(backgroundColor).multiplyScalar(0.7);
-      ctx.fillStyle = bgColor.getStyle();
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Set text properties with adjusted font for better readability
-      const fontSize = Math.min(canvas.height / 2, 32 * scale);
-      ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = textColor;
-
-      // Add slight text shadow for better contrast
-      ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
-      ctx.shadowBlur = 4;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 1;
-
-      // Handle text wrapping for longer text
-      const words = text.split(" ");
-      const maxWidth = canvas.width * 0.9;
-      let line = "";
-      const lines = [];
-
-      for (const word of words) {
-        const testLine = line + (line ? " " : "") + word;
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxWidth && line !== "") {
-          lines.push(line);
-          line = word;
-        } else {
-          line = testLine;
-        }
-      }
-      lines.push(line);
-
-      // Draw each line of text
-      const lineHeight = fontSize * 1.2;
-      const totalTextHeight = lineHeight * lines.length;
-      const startY = (canvas.height - totalTextHeight) / 2 + lineHeight / 2;
-
-      lines.forEach((line, i) => {
-        ctx.fillText(line, canvas.width / 2, startY + i * lineHeight);
-      });
-
-      // Create texture from canvas
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.needsUpdate = true;
-      return texture;
-    };
-
-    // Set loading to false since we don't need to wait for font loading anymore
-    setIsLoading(false);
-
-    // Create nodes with text on them
-    nodes.forEach((node) => {
-      // Create a group to hold the node and its text
-      const group = new THREE.Group();
-      group.position.copy(nodePositions[node.id]);
-
-      // Create the main geometry
-      const geometry = createNodeGeometry
-        ? createNodeGeometry(node.type)
-        : defaultCreateNodeGeometry(node.type);
-
-      // Create the base material for the node
-      const material = new THREE.MeshStandardMaterial({
-        color: node.color,
-        metalness: 0.1,
-        roughness: 0.5,
-      });
-
-      // Create node mesh
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.userData = {id: node.id, type: "node", name: node.name};
-      group.add(mesh);
-      nodeMeshes[node.id] = mesh;
-
-      // Add text panel above the node
-      const textPanelSize = {width: 2, height: 0.6};
-      const textTexture = createTextTexture(
-        node.name,
-        textPanelSize.width * 200,
-        textPanelSize.height * 200,
-        node.color,
-        "#000000"
-      );
-
-      if (textTexture) {
-        const textGeometry = new THREE.PlaneGeometry(
-          textPanelSize.width,
-          textPanelSize.height
-        );
-        const textMaterial = new THREE.MeshBasicMaterial({
-          map: textTexture,
-          transparent: true,
-          depthWrite: false,
-        });
-
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textMesh.position.set(0, 1.0, 0); // Position above the node
-        textMesh.lookAt(0, 0, 1); // Always face camera
-
-        group.add(textMesh);
-
-        // Add a billboard behavior to make text always face camera
-        const updateTextOrientation = () => {
-          if (textMesh && camera) {
-            textMesh.lookAt(camera.position);
+      {/* Render nodes */}
+      {nodes.map((node) => (
+        <Node
+          key={node.id}
+          node={node}
+          position={
+            nodePositions.current[node.id] ||
+            new THREE.Vector3(...node.position)
           }
-        };
+          onNodeClick={onNodeClick}
+          isHovered={node.id === hoveredNode}
+          setHovered={setHoveredNode}
+        />
+      ))}
 
-        // Store the update function for animation loop
-        textMesh.userData = {updateOrientation: updateTextOrientation};
-      }
+      {/* Render connections */}
+      {connections.map((connection, idx) => {
+        const fromPosition =
+          nodePositions.current[connection.from] ||
+          new THREE.Vector3(
+            ...(nodes.find((n) => n.id === connection.from)?.position || [
+              0, 0, 0,
+            ])
+          );
+        const toPosition =
+          nodePositions.current[connection.to] ||
+          new THREE.Vector3(
+            ...(nodes.find((n) => n.id === connection.to)?.position || [
+              0, 0, 0,
+            ])
+          );
 
-      // Add the group to the scene
-      scene.add(group);
-      nodeGroups[node.id] = group;
-    });
-
-    // Create connections with adjusted positions
-    connections.forEach((connection) => {
-      const fromNode = nodePositions[connection.from];
-      const toNode = nodePositions[connection.to];
-
-      if (fromNode && toNode) {
-        const points = [fromNode, toNode];
-
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-        const lineMaterial = new THREE.LineBasicMaterial({
-          color: 0x4a5568,
-          transparent: true,
-          opacity: 0.5,
-          ...(connection.type === "dashed"
-            ? {dashSize: 0.2, gapSize: 0.1}
-            : {}),
-        });
-
-        const line =
-          connection.type === "dashed"
-            ? new THREE.Line(lineGeometry, lineMaterial)
-            : new THREE.Line(lineGeometry, lineMaterial);
-
-        scene.add(line);
-      }
-    });
-
-    // Raycaster for interaction
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    // Handle mouse move for hover effect
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!mountRef.current) return;
-
-      mouse.x = (event.offsetX / mountRef.current.clientWidth) * 2 - 1;
-      mouse.y = -(event.offsetY / mountRef.current.clientHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children, true);
-
-      if (intersects.length > 0) {
-        const firstHit = intersects.find(
-          (hit) => hit.object.userData && hit.object.userData.type === "node"
+        return (
+          <Connection
+            key={`${connection.from}-${connection.to}-${idx}`}
+            startPosition={fromPosition}
+            endPosition={toPosition}
+            type={connection.type}
+          />
         );
+      })}
 
-        if (firstHit) {
-          document.body.style.cursor = "pointer";
-          const nodeId = firstHit.object.userData.id;
-          Object.values(nodeMeshes).forEach((mesh) => {
-            if (mesh.userData.id === nodeId) {
-              (mesh.material as THREE.MeshStandardMaterial).emissive.set(
-                0x666666
-              );
-              (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-                0.5;
-            } else {
-              (mesh.material as THREE.MeshStandardMaterial).emissive.set(
-                0x000000
-              );
-              (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity =
-                0;
-            }
-          });
-        } else {
-          document.body.style.cursor = "auto";
-          Object.values(nodeMeshes).forEach((mesh) => {
-            (mesh.material as THREE.MeshStandardMaterial).emissive.set(
-              0x000000
-            );
-            (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-          });
-        }
-      } else {
-        document.body.style.cursor = "auto";
-        Object.values(nodeMeshes).forEach((mesh) => {
-          (mesh.material as THREE.MeshStandardMaterial).emissive.set(0x000000);
-          (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0;
-        });
-      }
-    };
+      {/* Post-processing effects */}
+      <Effects>
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.2} intensity={0.3} radius={0.7} />
+          <Vignette opacity={0.3} darkness={0.7} />
+        </EffectComposer>
+      </Effects>
+    </>
+  );
+};
 
-    // Handle click for detailed information
-    const handleClick = (event: MouseEvent) => {
-      if (!mountRef.current) return;
+// Add subtle camera movement for more dynamic feel
+const CameraRig = () => {
+  const {camera} = useThree();
 
-      mouse.x = (event.offsetX / mountRef.current.clientWidth) * 2 - 1;
-      mouse.y = -(event.offsetY / mountRef.current.clientHeight) * 2 + 1;
+  useFrame(({clock}) => {
+    const t = clock.getElapsedTime() * 0.15;
+    camera.position.x += Math.sin(t) * 0.01;
+    camera.position.y += Math.cos(t) * 0.01;
+  });
 
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children, true);
+  return null;
+};
 
-      if (intersects.length > 0) {
-        const firstHit = intersects.find(
-          (hit) => hit.object.userData && hit.object.userData.type === "node"
-        );
+export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
+  nodes,
+  connections,
+  getNodeInfo,
+  height = "600px",
+  backgroundColor = 0x121212,
+}) => {
+  const [activeNode, setActiveNode] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
-        if (firstHit) {
-          const nodeId = firstHit.object.userData.id;
-          setActiveNode(nodeId);
-        }
-      }
-    };
-
-    // Add event listeners
-    if (mountRef.current) {
-      mountRef.current.addEventListener("mousemove", handleMouseMove);
-      mountRef.current.addEventListener("click", handleClick);
-    }
-
-    // Handle window resize
-    const handleResize = () => {
-      if (!mountRef.current) return;
-
-      const width = mountRef.current.clientWidth;
-      const height = mountRef.current.clientHeight;
-
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    // Animation loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      controls.update();
-
-      // Update text orientations to face camera
-      Object.values(nodeGroups).forEach((group) => {
-        group.children.forEach((child) => {
-          if (child.userData && child.userData.updateOrientation) {
-            child.userData.updateOrientation();
-          }
-        });
-      });
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // Cleanup
-    return () => {
-      if (mountRef.current) {
-        mountRef.current.removeEventListener("mousemove", handleMouseMove);
-        mountRef.current.removeEventListener("click", handleClick);
-        if (mountRef.current.contains(renderer.domElement)) {
-          mountRef.current.removeChild(renderer.domElement);
-        }
-      }
-
-      window.removeEventListener("resize", handleResize);
-
-      // Dispose materials and geometries
-      Object.values(nodeMeshes).forEach((mesh) => {
-        mesh.geometry.dispose();
-        (mesh.material as THREE.Material).dispose();
-      });
-
-      // Clean up all node groups
-      Object.values(nodeGroups).forEach((group) => {
-        scene.remove(group);
-        group.children.forEach((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.geometry.dispose();
-            if (child.material instanceof THREE.Material) {
-              child.material.dispose();
-            } else if (Array.isArray(child.material)) {
-              child.material.forEach((mat) => mat.dispose());
-            }
-          }
-        });
-      });
-    };
-  }, [nodes, connections, createNodeGeometry, backgroundColor]);
+  const handleNodeClick = (nodeId: string) => {
+    setActiveNode(nodeId);
+  };
 
   return (
     <div className='relative w-full' style={{height}}>
-      {isLoading && (
-        <div className='absolute inset-0 flex items-center justify-center bg-[#1a1a1a] bg-opacity-90 z-10'>
-          <div className='text-lg font-medium text-gray-200'>
-            Loading 3D diagram...
-          </div>
-        </div>
-      )}
+      <Canvas shadows dpr={[1, 2]} camera={{position: [0, 0, 20], fov: 60}}>
+        <color
+          attach='background'
+          args={[`#${backgroundColor.toString(16).padStart(6, "0")}`]}
+        />
 
-      <div ref={mountRef} className='w-full h-full' />
+        <Scene
+          nodes={nodes}
+          connections={connections}
+          onNodeClick={handleNodeClick}
+          hoveredNode={hoveredNode}
+          setHoveredNode={setHoveredNode}
+        />
 
+        <OrbitControls
+          enableDamping
+          dampingFactor={0.05}
+          minDistance={5}
+          maxDistance={30}
+          makeDefault
+        />
+
+        <PerspectiveCamera
+          makeDefault
+          position={[0, 0, 20]}
+          fov={60}
+          near={0.1}
+          far={1000}
+        />
+      </Canvas>
+
+      {/* Info panel */}
       {activeNode && (
-        <div className='absolute bottom-4 left-4 right-4 bg-[#242424] p-4 rounded-lg shadow-lg max-w-md border border-gray-700'>
+        <div className='absolute bottom-4 left-4 right-4 bg-[#1a1a1a] p-4 rounded-lg shadow-lg max-w-md backdrop-blur-md bg-opacity-85 border border-gray-700'>
           <h3 className='text-lg font-bold text-gray-100'>
             {getNodeInfo(activeNode).title}
           </h3>
@@ -501,7 +566,7 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
             {getNodeInfo(activeNode).description}
           </p>
           <button
-            className='mt-2 text-sm text-blue-400 hover:text-blue-300 transition-colors'
+            className='mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-md text-sm text-white transition-colors'
             onClick={() => setActiveNode(null)}
           >
             Close
@@ -509,7 +574,8 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
         </div>
       )}
 
-      <div className='absolute top-4 right-4 bg-[#242424] p-3 rounded-lg shadow-lg border border-gray-700'>
+      {/* Instructions panel */}
+      <div className='absolute top-4 right-4 bg-[#1a1a1a] p-3 rounded-lg shadow-lg backdrop-blur-md bg-opacity-85 border border-gray-700 transition-opacity opacity-80 hover:opacity-100'>
         <h4 className='font-medium text-sm mb-2 text-gray-200'>Instructions</h4>
         <ul className='text-xs space-y-1 text-gray-300'>
           <li>• Click on any node for details</li>

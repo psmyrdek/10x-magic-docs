@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Three.js Interactive Diagram Framework
 
-Your goal is to create a high-quality, interactive Three.js demo that allows users to explore and understand the relationships between different components of this technology as described in `flowchart.md`.
+Your goal is to create a high-quality, interactive Three.js demo that allows users to explore and understand the relationships between different ideas, components and modules.
 
 Before implementing the visualization, please plan out your approach. Consider the following aspects:
 

@@ -36,7 +36,7 @@ In `src/catalog/<TECHNOLOGY>/{Technology}DiagramContext.tsx`, `{Technology}Diagr
 
 Reuse common elements from [BaseThreeJSDiagram.tsx](mdc:src/shared/components/BaseThreeJSDiagram.tsx)
 
-6) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How. Use gathered knowledge to create interactive Wikipedia-like page in Dark Mode, inspired by Fluent 2.0, incorporating Diagrams and descriptions of each section, with examples in code snippets.
+6) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How. Use gathered knowledge to create interactive Wikipedia-like page in Dark Mode, inspired by Fluent 2.0 and [Layout.tsx](mdc:src/components/Layout.tsx), incorporating Diagrams and descriptions of each section, with examples in code snippets.
 
 General recommendations:
 - When developing code, always follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)
