@@ -58,10 +58,10 @@ export const useAnthropic = (): UseAnthropicReturn => {
             40% - Junior developer level with basic programming concepts
             50% - Regular developer level with standard technical terminology
             60% - Experienced developer with more advanced concepts
-            70% - Senior developer with detailed technical explanations (add code snippet)
-            80% - Technical lead with specialized domain knowledge (add code snippet)
-            90% - Principal engineer with advanced theoretical concepts (add code snippet)
-            100% - Technical paragraph for senior engineers with highly specialized jargon (add code snippet)
+            70% - Senior developer with detailed technical explanations
+            80% - Technical lead with specialized domain knowledge
+            90% - Principal engineer with advanced theoretical concepts
+            100% - Technical paragraph for senior engineers with highly specialized jargon
 
             You will be given a SUBJECT and a DESCRIPTION of the SUBJECT. The goal is to adjust the DESCRIPTION to match the TARGET_COMPLEXITY.
 
