@@ -1,7 +1,7 @@
 import React from "react";
 import {TextBlockProps} from "./tools.types";
 import {useAnthropic} from "./hooks/useAnthropic";
-import {ArrowUp, ArrowDown, Brain} from "lucide-react";
+import {ArrowUp, ArrowDown, Dumbbell} from "lucide-react";
 
 export const TextBlock: React.FC<TextBlockProps> = ({header, text}) => {
   const {modifyComplexity, isLoading, error} = useAnthropic();
@@ -35,11 +35,11 @@ export const TextBlock: React.FC<TextBlockProps> = ({header, text}) => {
           <h2 className='text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent'>
             {header}
           </h2>
-          <span className='flex flex-row items-center gap-1 text-xs text-gray-500'>
-            <Brain size={24} /> {complexityLevel}/10
-          </span>
         </div>
         <div className='flex gap-2'>
+          <span className='flex flex-row items-center gap-1 text-xs text-gray-500'>
+            <Dumbbell size={18} /> {complexityLevel}
+          </span>
           <button
             onClick={() => handleComplexityChange("decrease")}
             disabled={isLoading}
