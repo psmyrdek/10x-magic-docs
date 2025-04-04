@@ -1,8 +1,6 @@
 import React, {useRef, useState, useEffect} from "react";
 import * as THREE from "three";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
-import {TextGeometry} from "three/examples/jsm/geometries/TextGeometry.js";
-import {FontLoader, Font} from "three/examples/jsm/loaders/FontLoader.js";
 
 export type Node3D = {
   id: string;
@@ -94,7 +92,61 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
 
     // Node meshes map
     const nodeMeshes: {[key: string]: THREE.Mesh} = {};
-    const nodeLabels: {[key: string]: THREE.Mesh} = {};
+    const nodePositions: {[key: string]: THREE.Vector3} = {};
+    const nodeGroups: {[key: string]: THREE.Group} = {};
+
+    // Force-directed layout parameters
+    const repulsionForce = 2; // Strength of repulsion between nodes
+    const minDistance = 2.5; // Minimum distance between nodes
+    const damping = 0.8; // Damping factor for node movement
+    const iterations = 50; // Number of iterations for force-directed layout
+
+    // Initialize node positions
+    nodes.forEach((node) => {
+      nodePositions[node.id] = new THREE.Vector3(...node.position);
+    });
+
+    // Apply force-directed layout
+    for (let i = 0; i < iterations; i++) {
+      // Calculate repulsion forces
+      nodes.forEach((node1) => {
+        const pos1 = nodePositions[node1.id];
+        const forces = new THREE.Vector3(0, 0, 0);
+
+        nodes.forEach((node2) => {
+          if (node1.id !== node2.id) {
+            const pos2 = nodePositions[node2.id];
+            const direction = new THREE.Vector3().subVectors(pos1, pos2);
+            const distance = direction.length();
+
+            if (distance < minDistance) {
+              const force = repulsionForce / (distance * distance);
+              forces.add(direction.normalize().multiplyScalar(force));
+            }
+          }
+        });
+
+        // Apply forces with damping
+        const newPos = pos1.clone().add(forces.multiplyScalar(damping));
+
+        // Maintain vertical position (y-coordinate)
+        newPos.y = pos1.y;
+
+        // Limit horizontal movement
+        const maxHorizontalMove = 1.5;
+        const horizontalDiff = new THREE.Vector2(
+          newPos.x - pos1.x,
+          newPos.z - pos1.z
+        );
+        if (horizontalDiff.length() > maxHorizontalMove) {
+          horizontalDiff.normalize().multiplyScalar(maxHorizontalMove);
+          newPos.x = pos1.x + horizontalDiff.x;
+          newPos.z = pos1.z + horizontalDiff.y;
+        }
+
+        nodePositions[node1.id] = newPos;
+      });
+    }
 
     // Default node geometry creator
     const defaultCreateNodeGeometry = (type: string): THREE.BufferGeometry => {
@@ -112,95 +164,162 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
       }
     };
 
-    // Load font for text geometry
-    const fontLoader = new FontLoader();
-    fontLoader.load("/fonts/helvetiker_regular.typeface.json", (font: Font) => {
-      setIsLoading(false);
+    // Create canvas texture for text rendering
+    const createTextTexture = (
+      text: string,
+      width: number,
+      height: number,
+      backgroundColor: number,
+      textColor: string = "#ffffff"
+    ) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
 
-      // Create nodes
-      nodes.forEach((node) => {
-        const geometry = createNodeGeometry
-          ? createNodeGeometry(node.type)
-          : defaultCreateNodeGeometry(node.type);
+      // Set canvas size (higher resolution for better text quality)
+      const scale = 2;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
 
-        const material = new THREE.MeshStandardMaterial({
-          color: node.color,
-          metalness: 0.1,
-          roughness: 0.5,
-        });
+      // Fill background
+      ctx.fillStyle = new THREE.Color(backgroundColor).getStyle();
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(node.position[0], node.position[1], node.position[2]);
-        mesh.userData = {id: node.id, type: "node", name: node.name};
-        scene.add(mesh);
-        nodeMeshes[node.id] = mesh;
+      // Set text properties
+      const fontSize = Math.min(canvas.height / 2, 32 * scale);
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = textColor;
 
-        // Create text label
-        const textGeometry = new TextGeometry(node.name, {
-          font: font,
-          size: 0.35,
-          depth: 0.08,
-          curveSegments: 12,
-          bevelEnabled: true,
-          bevelThickness: 0.01,
-          bevelSize: 0.01,
-          bevelOffset: 0,
-          bevelSegments: 5,
-        });
+      // Handle text wrapping for longer text
+      const words = text.split(" ");
+      const maxWidth = canvas.width * 0.9;
+      let line = "";
+      const lines = [];
 
-        const textMaterial = new THREE.MeshPhongMaterial({
-          color: 0x222222,
-          specular: 0x111111,
-          shininess: 30,
-          flatShading: false,
+      for (const word of words) {
+        const testLine = line + (line ? " " : "") + word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line !== "") {
+          lines.push(line);
+          line = word;
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+
+      // Draw each line of text
+      const lineHeight = fontSize * 1.2;
+      const totalTextHeight = lineHeight * lines.length;
+      const startY = (canvas.height - totalTextHeight) / 2 + lineHeight / 2;
+
+      lines.forEach((line, i) => {
+        ctx.fillText(line, canvas.width / 2, startY + i * lineHeight);
+      });
+
+      // Create texture from canvas
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
+    };
+
+    // Set loading to false since we don't need to wait for font loading anymore
+    setIsLoading(false);
+
+    // Create nodes with text on them
+    nodes.forEach((node) => {
+      // Create a group to hold the node and its text
+      const group = new THREE.Group();
+      group.position.copy(nodePositions[node.id]);
+
+      // Create the main geometry
+      const geometry = createNodeGeometry
+        ? createNodeGeometry(node.type)
+        : defaultCreateNodeGeometry(node.type);
+
+      // Create the base material for the node
+      const material = new THREE.MeshStandardMaterial({
+        color: node.color,
+        metalness: 0.1,
+        roughness: 0.5,
+      });
+
+      // Create node mesh
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData = {id: node.id, type: "node", name: node.name};
+      group.add(mesh);
+      nodeMeshes[node.id] = mesh;
+
+      // Add text panel above the node
+      const textPanelSize = {width: 2, height: 0.6};
+      const textTexture = createTextTexture(
+        node.name,
+        textPanelSize.width * 200,
+        textPanelSize.height * 200,
+        node.color,
+        "#000000"
+      );
+
+      if (textTexture) {
+        const textGeometry = new THREE.PlaneGeometry(
+          textPanelSize.width,
+          textPanelSize.height
+        );
+        const textMaterial = new THREE.MeshBasicMaterial({
+          map: textTexture,
+          transparent: true,
+          depthWrite: false,
         });
 
         const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.set(0, 1.0, 0); // Position above the node
+        textMesh.lookAt(0, 0, 1); // Always face camera
 
-        // Center the text under the node
-        textGeometry.computeBoundingBox();
-        const textWidth =
-          textGeometry.boundingBox!.max.x - textGeometry.boundingBox!.min.x;
-        textMesh.position.set(
-          node.position[0] - textWidth / 2,
-          node.position[1] - 1.3,
-          node.position[2]
-        );
+        group.add(textMesh);
 
-        textMesh.rotation.x = -0.1;
-        scene.add(textMesh);
-        nodeLabels[node.id] = textMesh;
-      });
+        // Add a billboard behavior to make text always face camera
+        const updateTextOrientation = () => {
+          if (textMesh && camera) {
+            textMesh.lookAt(camera.position);
+          }
+        };
 
-      // Create connections
-      connections.forEach((connection) => {
-        const fromNode = nodes.find((n) => n.id === connection.from);
-        const toNode = nodes.find((n) => n.id === connection.to);
+        // Store the update function for animation loop
+        textMesh.userData = {updateOrientation: updateTextOrientation};
+      }
 
-        if (fromNode && toNode) {
-          const points = [
-            new THREE.Vector3(...fromNode.position),
-            new THREE.Vector3(...toNode.position),
-          ];
+      // Add the group to the scene
+      scene.add(group);
+      nodeGroups[node.id] = group;
+    });
 
-          const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-          const lineMaterial = new THREE.LineBasicMaterial({
-            color: 0x666666,
-            transparent: true,
-            opacity: 0.7,
-            ...(connection.type === "dashed"
-              ? {dashSize: 0.2, gapSize: 0.1}
-              : {}),
-          });
+    // Create connections with adjusted positions
+    connections.forEach((connection) => {
+      const fromNode = nodePositions[connection.from];
+      const toNode = nodePositions[connection.to];
 
-          const line =
-            connection.type === "dashed"
-              ? new THREE.Line(lineGeometry, lineMaterial)
-              : new THREE.Line(lineGeometry, lineMaterial);
+      if (fromNode && toNode) {
+        const points = [fromNode, toNode];
 
-          scene.add(line);
-        }
-      });
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMaterial = new THREE.LineBasicMaterial({
+          color: 0x666666,
+          transparent: true,
+          opacity: 0.7,
+          ...(connection.type === "dashed"
+            ? {dashSize: 0.2, gapSize: 0.1}
+            : {}),
+        });
+
+        const line =
+          connection.type === "dashed"
+            ? new THREE.Line(lineGeometry, lineMaterial)
+            : new THREE.Line(lineGeometry, lineMaterial);
+
+        scene.add(line);
+      }
     });
 
     // Raycaster for interaction
@@ -215,7 +334,7 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
       mouse.y = -(event.offsetY / mountRef.current.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children);
+      const intersects = raycaster.intersectObjects(scene.children, true);
 
       if (intersects.length > 0) {
         const firstHit = intersects.find(
@@ -260,7 +379,7 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
       mouse.y = -(event.offsetY / mountRef.current.clientHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(scene.children);
+      const intersects = raycaster.intersectObjects(scene.children, true);
 
       if (intersects.length > 0) {
         const firstHit = intersects.find(
@@ -298,6 +417,16 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
+
+      // Update text orientations to face camera
+      Object.values(nodeGroups).forEach((group) => {
+        group.children.forEach((child) => {
+          if (child.userData && child.userData.updateOrientation) {
+            child.userData.updateOrientation();
+          }
+        });
+      });
+
       renderer.render(scene, camera);
     };
 
@@ -315,14 +444,25 @@ export const BaseThreeJSDiagram: React.FC<BaseThreeJSDiagramProps> = ({
 
       window.removeEventListener("resize", handleResize);
 
+      // Dispose materials and geometries
       Object.values(nodeMeshes).forEach((mesh) => {
         mesh.geometry.dispose();
         (mesh.material as THREE.Material).dispose();
       });
 
-      Object.values(nodeLabels).forEach((mesh) => {
-        mesh.geometry.dispose();
-        (mesh.material as THREE.Material).dispose();
+      // Clean up all node groups
+      Object.values(nodeGroups).forEach((group) => {
+        scene.remove(group);
+        group.children.forEach((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.geometry.dispose();
+            if (child.material instanceof THREE.Material) {
+              child.material.dispose();
+            } else if (Array.isArray(child.material)) {
+              child.material.forEach((mat) => mat.dispose());
+            }
+          }
+        });
       });
     };
   }, [nodes, connections, createNodeGeometry, backgroundColor]);

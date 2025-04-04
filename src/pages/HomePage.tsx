@@ -4,10 +4,11 @@ import {Link} from "react-router-dom";
 const subjects = [
   {id: "github-actions", name: "GitHub Actions", path: "/github-actions"},
   {id: "docker", name: "Docker", path: "/docker"},
-  // Placeholders for future subjects (remaining 23 tiles)
-  ...Array.from({length: 23}, (_, i) => ({
-    id: `placeholder-${i + 3}`,
-    name: `Subject ${i + 3}`,
+  {id: "react", name: "React", path: "/react"},
+  // Placeholders for future subjects (remaining 22 tiles)
+  ...Array.from({length: 22}, (_, i) => ({
+    id: `placeholder-${i + 4}`,
+    name: `Subject ${i + 4}`,
     path: "#",
   })),
 ];

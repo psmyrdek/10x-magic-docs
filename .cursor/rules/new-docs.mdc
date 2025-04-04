@@ -23,7 +23,7 @@ Execute the following:
 
 Always use [GithubActionsDiagram.tsx](mdc:src/catalog/github-actions/GithubActionsDiagram.tsx) as a reference (including base diagram [BaseThreeJSDiagram.tsx](mdc:src/shared/components/BaseThreeJSDiagram.tsx))
 
-8) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How.
+8) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that integrates all three diagrams - Why, What and How. Use `knowledge.md` to create interactive Wikipedia-like page incorporating Diagrams and descriptions of each section, with examples in code snippets.
 
 
 When developing code, always follow [threejs.mdc](mdc:.cursor/rules/threejs.mdc) and [react-development.mdc](mdc:.cursor/rules/react-development.mdc)

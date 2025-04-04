@@ -13,7 +13,8 @@ Before implementing the visualization, please plan out your approach. Consider t
 2. Appropriate 3D representations for these elements
 3. Interactive features to implement
 4. Performance optimization strategies
-5. User instructions for the demo
+5. Auto-adjusting layout and elements to avoid overlapping text and shapes
+6. User instructions for the demo
 
 Inside <visualization_planning> tags, outline your approach and considerations for each of these aspects. Include the following steps:
 1. List all components of the technology and their relationships.
