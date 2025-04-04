@@ -1,6 +1,12 @@
 # Magic Docs by 10xDevs
 
+![](./docs/banner.jpg)
+
 Create interactive bits of documentation by collaborating with Generative AI Models.
+
+## Prequisites
+
+- Anthropic API Key (see `.env.example`)
 
 ## How to use
 
