@@ -15,7 +15,7 @@ Create interactive bits of documentation by collaborating with Generative AI Mod
 3. Open Agent in Cursor/Windsurf/Copilot and run command such as:
 
 ```plaintext
-Create new docs page for Github Actions based on @new-docs.mdc
+Create new docs page for <TECHNOLOGY> based on @new-docs.mdc
 ```
 
 4. Start the app with `npm run dev`
