@@ -6,7 +6,7 @@ alwaysApply: true
 ## Tech Stack
 
 - React 19
-- Tailwind
+- Tailwind 4
 - Vite
 - shadcn/ui
 

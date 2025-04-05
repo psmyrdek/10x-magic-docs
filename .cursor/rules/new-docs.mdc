@@ -11,9 +11,9 @@ Your goal is to create end-to-end solution for <TECHNOLOGY> mentioned by the use
 
 Execute the following:
 
-1) Make sure that subdirectory `src/catalog` exists
-2) Create subdirectory `src/catalog/<TECHNOLOGY>` (kebab-case)
-3) In `src/catalog/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that acts as a skeleton for new page.
+1) Make sure that subdirectory `src/components/docs` exists
+2) Create subdirectory `src/components/docs/<TECHNOLOGY>` (kebab-case)
+3) In `src/components/docs/<TECHNOLOGY>/{Technology}Page.tsx` create a new React page component that acts as a skeleton for new page.
 
 Use h1 header as a starting point:
 

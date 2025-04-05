@@ -13,21 +13,15 @@ import {
   HoverCardTrigger,
 } from "../components/ui/hover-card";
 
-// Define available subjects
-const availableSubjects = [
-  {
-    id: "github-actions",
-    name: "GitHub Actions",
-    path: "/github-actions",
-    description: "Learn GitHub Actions automation",
-  },
-  {
-    id: "docker",
-    name: "Docker",
-    path: "/docker",
-    description: "Master containerization with Docker",
-  },
-];
+interface Subject {
+  id: string;
+  name: string;
+  path: string;
+  description: string;
+}
+
+// Introduce a new Subject to present it on the home page grid
+const availableSubjects: Subject[] = [];
 
 // Total number of tiles to display
 const TOTAL_TILES = 25;
